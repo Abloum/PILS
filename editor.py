@@ -82,6 +82,11 @@ class Editor:
             self.add_list("fpos", self.entry.get())
             IvySendMsg("Draw:" + "fpos " + self.entry.get())
 
+    def fcap(self):
+        if self.check_angle():
+            self.add_list("fcap", self.entry.get())
+            IvySendMsg("Draw:" + "fcap " + self.entry.get())
+
     def fcc(self):
         if self.check_color():
             self.add_list("fcc", self.entry.get())
@@ -112,6 +117,15 @@ class Editor:
             return True
         except ValueError:
             self.var.set("veuillez entrer un entier")
+            return False
+
+    def check_angle(self):
+        try:
+            val = float(self.entry.get())
+            self.var.set("")
+            return True
+        except:
+            self.var.set("veuillez entrer un angle")
             return False
 
     def check_coordinates(self):

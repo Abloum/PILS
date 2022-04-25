@@ -95,6 +95,9 @@ class Visualizer:
     def fpos(self, coordinates):
         self.turtle.goto(eval(coordinates))
 
+    def fcap(self, cap):
+        self.turtle.setheading(cap)
+
     def forward(self, amount):
         self.turtle.forward(int(amount))
 
