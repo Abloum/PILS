@@ -51,13 +51,12 @@ class Editor:
                             fg=button_text_color,
                             command=self.suppr_liste)
         self.saveXML = Button(window, text="Enregistre fichier", font=("Helvetica", 12), bg=button_color,
-                              fg=button_text_color)
+                              fg=button_text_color, command=self.fpos)
         self.loadXML = Button(window, text="Charger fichier", font=("Helvetica", 12), bg=button_color,
-                              fg=button_text_color)
+                              fg=button_text_color, command=self.fcc)
         self.leave = Button(window, text="Quitter", font=("Helvetica", 20), bg=button_color,
                             fg=button_text_color,
                             command=self.the_end)
-
         self.entry.pack(pady=(30, 10), padx=(90, 90), fill=X, side=TOP)
         zone2.pack(fill=X, padx=10, pady=10)
         zone3.pack(fill=X, padx=10, pady=10)
@@ -70,15 +69,41 @@ class Editor:
         self.saveXML.pack(pady=(1, 5), padx=(90, 90), fill=X)
         self.loadXML.pack(pady=5, padx=(90, 90), fill=X)
         self.Suppr.pack(pady=5, padx=(90, 90), fill=X)
-
         self.leave.pack(fill=X, side=BOTTOM)
-
         IvyInit("Editor")
         IvyStart()
 
     @staticmethod
     def the_end():
         window.destroy()
+
+    def fpos(self):
+        if self.check_coordinates():
+            self.add_list("fpos", self.entry.get())
+            IvySendMsg("Draw:" + "fpos " + self.entry.get())
+
+    def fcc(self):
+        if self.check_color():
+            self.add_list("fcc", self.entry.get())
+            IvySendMsg("Draw:" + "fcc " + self.entry.get())
+
+    def penup(self):
+        self.add_list("penup", "0")
+        IvySendMsg("Draw:" + "penup " + "0")
+
+    def pendown(self):
+        self.add_list("pendown", "0")
+        IvySendMsg("Draw:" + "pendown " + "0")
+
+    def origin(self):
+        self.add_list("origin", "0")
+        IvySendMsg("Draw:" + "origin " + "0")
+
+    def restore(self):
+        IvySendMsg("Draw:" + "restore " + "0")
+
+    def clear(self):
+        IvySendMsg("Draw:" + "clear " + "0")
 
     def check_int(self):
         try:
@@ -89,8 +114,32 @@ class Editor:
             self.var.set("veuillez entrer un entier")
             return False
 
-    def rejouer_sequence(self):
-        print("rejouer séquence")
+    def check_coordinates(self):
+        try:
+            coos = eval(self.entry.get())
+            if coos.len != 2:
+                return False
+            self.var.set("")
+            int(coos[0])
+            int(coos[1])
+            return True
+        except:
+            self.var.set("veuillez entrer des coordonnées")
+            return False
+
+    def check_color(self):
+        try:
+            coos = eval(self.entry.get())
+            if coos.len != 3:
+                return False
+            self.var.set("")
+            0 <= int(coos[0]) <= 255
+            0 <= int(coos[1]) <= 255
+            0 <= int(coos[2]) <= 255
+            return True
+        except:
+            self.var.set("veuillez entrer un triplet RGB")
+            return False
 
     def suppr_liste(self):
         x = (((str(self.liste.curselection())).replace("(", "")).replace(")", "")).split(",")
