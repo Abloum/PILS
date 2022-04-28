@@ -1,6 +1,6 @@
 from tkinter import *
-
 from ivy.std_api import *
+from lxml import etree
 
 window = Tk()
 
@@ -24,7 +24,6 @@ send_right = Button
 fcap = Button
 
 liste = Listbox
-Suppr = Button
 
 zonePen = Frame()
 penup = Button
@@ -55,8 +54,15 @@ NRep = Entry
 btn_repet = Button
 liste_repet = Listbox
 
+zoneXML = Frame()
 saveXML = Button
 loadXML = Button
+NomFichier = Entry
+
+zoneSuppr = Frame()
+Suppr = Button
+Vide = Button
+
 leave = Button
 
 
@@ -102,9 +108,6 @@ class Editor:
                                  command=self.fcap)
 
         self.liste = Listbox(window, bg=background_color, height=5)
-        self.Suppr = Button(window, text="Supprimer ligne", font=("Helvetica", 12), bg=button_color,
-                            fg=button_text_color,
-                            command=self.suppr_liste)
 
         self.zonePen = Frame(window, bg='#777777')
         self.penup = Button(zonePen, text="lever la tortue", font=("Helvetica", 12), bg=button_color,
@@ -155,26 +158,42 @@ class Editor:
                                    fg=button_text_color,
                                    command=self.repet)
 
-        self.saveXML = Button(window, text="Enregistre fichier", font=("Helvetica", 12), bg=button_color,
-                              fg=button_text_color, command=self.fpos)
-        self.loadXML = Button(window, text="Charger fichier", font=("Helvetica", 12), bg=button_color,
-                              fg=button_text_color, command=self.fcc)
+        self.zoneXML = Frame(window, bg=background_color)
+        self.saveXML = Button(zoneXML, text="Enregistre fichier", font=("Helvetica", 12), bg=button_color,
+                              fg=button_text_color,
+                              command=self.save)
+        self.loadXML = Button(zoneXML, text="Charger fichier", font=("Helvetica", 12), bg=button_color,
+                              fg=button_text_color,
+                              command=self.load)
+        self.NomFichier = Entry(window, font=("Helvetica", 12), fg='Black', width=5)
+
+        self.zoneSuppr = Frame(window, bg=background_color)
+        self.Suppr = Button(zoneSuppr, text="Supprimer ligne", font=("Helvetica", 12), bg=button_color,
+                            fg=button_text_color,
+                            command=self.suppr_liste)
+        self.Vide = Button(zoneSuppr, text="Vider liste", font=("Helvetica", 12), bg=button_color,
+                            fg=button_text_color,
+                            command=self.vide)
+
         self.leave = Button(window, text="Quitter", font=("Helvetica", 20), bg=button_color,
                             fg=button_text_color,
                             command=self.the_end)
 
         zoneMode.pack(fill=X, padx=10, pady=(10,0))
-        self.entry.pack(pady=(15, 10), padx=(90, 90), fill=X, side=TOP)
+        self.entry.pack(pady=(10, 5), padx=(90, 90), fill=X, side=TOP)
         zoneMove.pack(fill=X, padx=10)
-        zoneTurn.pack(fill=X, padx=10, pady=3)
+        zoneTurn.pack(fill=X, padx=10)
         self.fcap.pack(fill=X, padx=10)
-        self.liste.pack(fill=X, pady=10)
+        self.liste.pack(fill=X, pady=3)
         zonePen.pack(fill=X, padx=10)
-        zoneCoord.pack(fill=X, padx=10, pady=3)
-        zoneRGB.pack(fill=X, padx=10, pady=3)
-        zoneFunction.pack(fill=X, padx=10, pady=3)
-        zoneRepBtn.pack(fill=X, padx=10, pady=3)
-        zoneRep.pack(fill=X, padx=10, pady=3)
+        zoneCoord.pack(fill=X, padx=10)
+        zoneRGB.pack(fill=X, padx=10)
+        zoneFunction.pack(fill=X, padx=10)
+        zoneRepBtn.pack(fill=X, padx=10, pady=(3,0))
+        zoneRep.pack(fill=X, padx=10, pady=(0,3))
+        self.NomFichier.pack(fill=X,padx=10, pady=(3,0))
+        zoneXML.pack(fill=X, padx=10, pady=(0,3))
+        zoneSuppr.pack(fill=X, padx=10, pady=3)
 
         self.autoOff.pack(fill=X,ipadx=62, side=LEFT)
         self.autoOn.pack(fill=X,ipadx=50, side=LEFT)
@@ -205,12 +224,14 @@ class Editor:
 
         self.NRep.pack(fill=X, pady=10, side=LEFT)
         self.btn_repet.pack(fill=X, pady=10, side=LEFT)
-        self.liste_repet.pack(fill=X, pady=10, side=RIGHT)
+        self.liste_repet.pack(fill=X, side=RIGHT)
 
         self.text.pack(pady=(0, 5), padx=(90, 90), fill=X)
-        self.saveXML.pack(pady=(1, 5), padx=(90, 90), fill=X)
-        self.loadXML.pack(pady=5, padx=(90, 90), fill=X)
-        self.Suppr.pack(pady=5, padx=(90, 90), fill=X)
+        self.saveXML.pack(ipadx=20, fill=X, side=LEFT)
+        self.loadXML.pack(ipadx=40, fill=X, side=LEFT)
+
+        self.Suppr.pack(ipadx=25, fill=X, side=LEFT)
+        self.Vide.pack(ipadx=42, fill=X, side=LEFT)
         self.leave.pack(fill=X, side=BOTTOM)
         IvyInit("Editor")
         IvyStart()
@@ -273,7 +294,6 @@ class Editor:
             elif move[0] == "fcc":
                 IvySendMsg("Draw:fcc" + "(" + move[1] + "," + move[2] + "," + move[3] + ")")
             else:
-                print("Draw:" + move[0] +" "+move[1])
                 IvySendMsg("Draw:" + move[0] +" "+move[1])
 
     def autoOff(self):
@@ -289,6 +309,55 @@ class Editor:
 
     def clear(self):
         self.add_list("clear", "0")
+
+    def save(self):
+        if (len(self.NomFichier.get())>0):
+            ch = "<?xml version='1.0' encoding='UTF-8'?>\n<liste_actions>\n"
+            if(self.check_mode_repete()):
+                for i in range(len(self.liste_actions_repet)):
+                    move = (str(self.liste_actions_repet[i])).split()
+                    if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
+                        ch += "<action move='"+move[0]+"'/>\n"
+                    elif move[0] == "fpos":
+                        ch += "<action move='fpos' value1='"+move[1]+"' value2='"+move[2]+"' />\n"
+                    elif move[0] == "fcc":
+                        ch += "<action move='fpos' value1='"+move[1]+"' value2='"+move[2]+"' value3='"+move[3]+"'/>\n"
+                    else:
+                        ch += "<action move='"+move[0]+"' value='"+move[1]+"' />\n"
+            else:
+                for i in range(len(self.liste_actions)):
+                    move = (str(self.liste_actions[i])).split()
+                    if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
+                        ch += "<action move='"+move[0]+"'/>\n"
+                    elif move[0] == "fpos":
+                        moveTemp = move[1].replace("(","").replace(")","").split(",")
+                        ch += "<action move='fpos' value1='"+moveTemp[0]+"' value2='"+moveTemp[1]+"' />\n"
+                    elif move[0] == "fcc":
+                        moveTemp = move[1].replace("(","").replace(")","").split(",")
+                        ch += "<action move='fcc' value1='"+moveTemp[0]+"' value2='"+moveTemp[1]+"' value3='"+moveTemp[2]+"'/>\n"
+                    else:
+                        ch += "<action move='"+move[0]+"' value='"+move[1]+"' />\n"
+            ch += "</liste_actions>"
+            fichier = open("XML_Save/"+self.NomFichier.get()+".xml", "w")
+            fichier.write(ch)
+            fichier.close()
+        else :
+            self.var.set("veuillez entrer un nom")
+
+    def load(self):
+        if (len(self.NomFichier.get())>0):
+            tree = etree.parse("XML_Save/"+self.NomFichier.get()+".xml")
+            for move in tree.xpath("/liste_actions/action"):
+                if str(move.get("move")) == "clear" or str(move.get("move")) == "restore" or str(move.get("move")) == "origin" or str(move.get("move")) == "pendown" or str(move.get("move")) == "penup":
+                    self.add_list(str(move.get("move")), "0")
+                elif move.get("move") == "fpos":
+                    self.add_list("fpos", "(" + str(move.get("value1")) + "," + str(move.get("value2"))+")")
+                elif move.get("move") == "fcc":
+                    self.add_list("fcc", "(" + str(move.get("value1")) + "," + str(move.get("value2")) + "," + str(move.get("value3")) + ")")
+                else:
+                    self.add_list(str(move.get("move")), str(move.get("value")))
+        else :
+            self.var.set("veuillez entrer un nom")
 
     def check_mode_repete(self):
         if (self.RepOff['state'] == NORMAL ) :
@@ -330,6 +399,7 @@ class Editor:
                 0 <= int(self.colorB.get()) <= 255) :
                 return True
             else :
+                self.var.set("RGB incorrect")
                 return False
         except:
             self.var.set("veuillez entrer un triplet RGB")
@@ -348,6 +418,16 @@ class Editor:
         if (len(ListeP)-1>0):
             IvySendMsg("Draw:" + "redraw " + "0")
 
+    def vide(self):
+        if self.check_mode_repete():
+            while len(self.liste_actions_repet)>0:
+                self.liste_actions_repet.pop(0)
+                self.liste_repet.delete(0)
+        else:
+            while len(self.liste_actions)>0:
+                self.liste_actions.pop(0)
+                self.liste.delete(0)
+
     def add_list(self, move, size):
         if self.check_mode_repete():
             self.liste_actions_repet.append((move + " " + size))
@@ -356,7 +436,6 @@ class Editor:
             self.liste_actions.append((move + " " + size))
             self.liste.insert(END, (move, size))
             if (self.autoOn['state'] == DISABLED) :
-                print("Draw:" + move +" "+ size)
                 IvySendMsg("Draw:" + move +" "+ size)
 
     def repet(self):
@@ -368,13 +447,13 @@ class Editor:
                     if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
                         self.add_list(move[0], "0")
                     elif move[0] == "fpos":
-                        self.add_list("fpos", "("+move[1]+","+move[2])
+                        moveTemp = move[1].replace("(","").replace(")","").split(",")
+                        self.add_list("fpos", "("+moveTemp[0]+","+moveTemp[1]+")")
                     elif move[0] == "fcc":
-                        self.add_list("fcc", "(" + move[1] + "," + move[2] + "," + move[3] + ")")
+                        moveTemp = move[1].replace("(","").replace(")","").split(",")
+                        self.add_list("fcc", "(" + moveTemp[0] + "," + moveTemp[1] + "," + moveTemp[2] + ")")
                     else:
                         self.add_list(move[0], move[1])
-
-
 
 Editor(window)
 window.mainloop()
