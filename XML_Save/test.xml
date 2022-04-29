@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<liste_actions>
+<avancer dist='90'/>
+<avancer dist='90'/>
+<gauche angle='90'/>
+<repeter fois='1'>
+<nettoyer/>
+<avancer dist='90'/>
+</repeter>
+<origine/>
+<nettoyer/>
+<avancer dist='90'/>
+</liste_actions>

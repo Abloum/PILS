@@ -311,32 +311,23 @@ class Editor:
         self.add_list("clear", "0")
 
     def save(self):
-        if (len(self.NomFichier.get())>0):
+        i=0
+        while(i < len(self.liste_actions)):
             ch = "<?xml version='1.0' encoding='UTF-8'?>\n<liste_actions>\n"
-            if(self.check_mode_repete()):
-                for i in range(len(self.liste_actions_repet)):
-                    move = (str(self.liste_actions_repet[i])).split()
-                    if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
-                        ch += "<action move='"+move[0]+"'/>\n"
-                    elif move[0] == "fpos":
-                        ch += "<action move='fpos' value1='"+move[1]+"' value2='"+move[2]+"' />\n"
-                    elif move[0] == "fcc":
-                        ch += "<action move='fpos' value1='"+move[1]+"' value2='"+move[2]+"' value3='"+move[3]+"'/>\n"
-                    else:
-                        ch += "<action move='"+move[0]+"' value='"+move[1]+"' />\n"
-            else:
-                for i in range(len(self.liste_actions)):
-                    move = (str(self.liste_actions[i])).split()
-                    if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
-                        ch += "<action move='"+move[0]+"'/>\n"
-                    elif move[0] == "fpos":
-                        moveTemp = move[1].replace("(","").replace(")","").split(",")
-                        ch += "<action move='fpos' value1='"+moveTemp[0]+"' value2='"+moveTemp[1]+"' />\n"
-                    elif move[0] == "fcc":
-                        moveTemp = move[1].replace("(","").replace(")","").split(",")
-                        ch += "<action move='fcc' value1='"+moveTemp[0]+"' value2='"+moveTemp[1]+"' value3='"+moveTemp[2]+"'/>\n"
-                    else:
-                        ch += "<action move='"+move[0]+"' value='"+move[1]+"' />\n"
+            for i in range(len(self.liste_actions)):
+                move = (str(self.liste_actions[i])).split()
+                if move[0] == "repete":
+                    ch += "<repeter fois='"+move[1]+"'>\n"
+                    i+=1
+                    while (move[0]!="fin"):
+                        print(move[0])
+                        ch += self.xmlFileWrite(move)
+                        i += 1
+                        move = (str(self.liste_actions[i])).split()
+                    ch += "</repeter>\n"
+                else :
+                    ch += self.xmlFileWrite(move)
+                i+=1
             ch += "</liste_actions>"
             fichier = open("XML_Save/"+self.NomFichier.get()+".xml", "w")
             fichier.write(ch)
@@ -344,18 +335,45 @@ class Editor:
         else :
             self.var.set("veuillez entrer un nom")
 
+    def xmlFileWrite(self, move):
+        if move[0] == "clear":
+            return "<nettoyer/>\n"
+        elif move[0] == "restore":
+            return "<restaurer/>\n"
+        elif move[0] == "origin":
+            return "<origine/>\n"
+        elif move[0] == "pendown":
+            return "<lever/>\n"
+        elif move[0] == "penup":
+            return "<baisser/>\n"
+        elif move[0] == "forward":
+            return "<avancer dist='" + move[1] + "'/>\n"
+        elif move[0] == "back":
+            return "<reculer dist='" + move[1] + "'/>\n"
+        elif move[0] == "left":
+            return "<gauche angle='" + move[1] + "'/>\n"
+        elif move[0] == "right":
+            return "<droite angle='" + move[1] + "'/>\n"
+        elif move[0] == "fpos":
+            return "<position x='" + move[1] + "' y='" + move[2] + "' />\n"
+        elif move[0] == "fcc":
+            return "<crayon rouge='" + move[1] + "' vert='" + move[2] + "' bleu='" + move[3] + "'/>\n"
+        else :
+            return ""
+
     def load(self):
         if (len(self.NomFichier.get())>0):
             tree = etree.parse("XML_Save/"+self.NomFichier.get()+".xml")
-            for move in tree.xpath("/liste_actions/action"):
-                if str(move.get("move")) == "clear" or str(move.get("move")) == "restore" or str(move.get("move")) == "origin" or str(move.get("move")) == "pendown" or str(move.get("move")) == "penup":
-                    self.add_list(str(move.get("move")), "0")
-                elif move.get("move") == "fpos":
-                    self.add_list("fpos", "(" + str(move.get("value1")) + "," + str(move.get("value2"))+")")
-                elif move.get("move") == "fcc":
-                    self.add_list("fcc", "(" + str(move.get("value1")) + "," + str(move.get("value2")) + "," + str(move.get("value3")) + ")")
-                else:
-                    self.add_list(str(move.get("move")), str(move.get("value")))
+            for move in tree.xpath("/liste_actions/*"):
+                print(str(move).split()[1])
+                # if str(move.get("move")) == "clear" or str(move.get("move")) == "restore" or str(move.get("move")) == "origin" or str(move.get("move")) == "pendown" or str(move.get("move")) == "penup":
+                #     self.add_list(str(move.get("move")), "0")
+                # elif move.get("move") == "fpos":
+                #     self.add_list("fpos", "(" + str(move.get("value1")) + "," + str(move.get("value2"))+")")
+                # elif move.get("move") == "fcc":
+                #     self.add_list("fcc", "(" + str(move.get("value1")) + "," + str(move.get("value2")) + "," + str(move.get("value3")) + ")")
+                # else:
+                #     self.add_list(str(move.get("move")), str(move.get("value")))
         else :
             self.var.set("veuillez entrer un nom")
 
@@ -409,14 +427,26 @@ class Editor:
         ListeP = (((str(self.liste.curselection())).replace("(", "")).replace(")", "")).split(",")
         ListeR = (((str(self.liste_repet.curselection())).replace("(", "")).replace(")", "")).split(",")
         for i in range(len(ListeP) - 1):
-            self.liste_actions.pop(int(ListeP[i]))
-            self.liste.delete(ListeP[i])
-            IvySendMsg("Draw:" + "erase " + ListeP[i])
+            testTemp = (str(self.liste_actions[int(ListeP[i])])).split()
+            if (testTemp[0]=="repete"):
+                self.liste_actions.pop(int(ListeP[i]))
+                self.liste.delete(ListeP[i])
+                while (testTemp!="fin repete"):
+                    self.liste_actions.pop(int(ListeP[i]))
+                    self.liste.delete(ListeP[i])
+                    testTemp = self.liste_actions[int(ListeP[i])]
+                self.liste_actions.pop(int(ListeP[i]))
+                self.liste.delete(ListeP[i])
+            elif (testTemp[0]=="fin"):
+                self.var.set("valeur non supprimable")
+            else :
+                self.liste_actions.pop(int(ListeP[i]))
+                self.liste.delete(ListeP[i])
         for i in range(len(ListeR) - 1):
             self.liste_actions_repet.pop(int(ListeR[i]))
             self.liste_repet.delete(ListeR[i])
         if (len(ListeP)-1>0):
-            IvySendMsg("Draw:" + "redraw " + "0")
+            self.redraw()
 
     def vide(self):
         if self.check_mode_repete():
@@ -441,19 +471,42 @@ class Editor:
     def repet(self):
         self.RepTurnOff()
         if self.check_int(self.NRep.get()):
-            for i in range(int(self.NRep.get())):
-                for i in range(len(self.liste_actions_repet)):
-                    move = (str(self.liste_actions_repet[i])).split()
-                    if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
-                        self.add_list(move[0], "0")
-                    elif move[0] == "fpos":
-                        moveTemp = move[1].replace("(","").replace(")","").split(",")
-                        self.add_list("fpos", "("+moveTemp[0]+","+moveTemp[1]+")")
-                    elif move[0] == "fcc":
-                        moveTemp = move[1].replace("(","").replace(")","").split(",")
-                        self.add_list("fcc", "(" + moveTemp[0] + "," + moveTemp[1] + "," + moveTemp[2] + ")")
-                    else:
-                        self.add_list(move[0], move[1])
+            self.liste_actions.append("repete "+self.NRep.get())
+            self.liste.insert(END, ("repete",self.NRep.get()))
+            listeTemp = []
+            for i in range(len(self.liste_actions_repet)):
+                listeTemp.append(str(self.liste_actions_repet[i]))
+                self.liste_actions.append(str(self.liste_actions_repet[i]))
+                self.liste.insert(END, str(self.liste_actions_repet[i]))
+            self.liste_actions.append("fin repete")
+            self.liste.insert(END, ("fin repete"))
+            self.lireRep(listeTemp, int(self.NRep.get()))
+
+    def lireRep(self, liste, nb):
+        for i in range(nb):
+            for i in range(len(liste)):
+                move = (str(liste[i])).split()
+                IvySendMsg("Draw:" + move[0] + " " + move[1])
+
+    def redraw(self):
+        IvySendMsg("Draw:" + "restore" +" 0")
+        i=0
+        while(i < len(self.liste_actions)):
+            move = (str(self.liste_actions[i])).split()
+            if (move[0]=="repete"):
+                nb = int(move[1])
+                i+=1
+                listeTemp = []
+                while (move[0]!="fin"):
+                    listeTemp.append(str(self.liste_actions[i]))
+                    i+=1
+                    move = (str(self.liste_actions[i])).split()
+                self.lireRep(listeTemp, nb)
+            else:
+                IvySendMsg("Draw:" + move[0] + " " + move[1])
+            i+=1
+
+
 
 Editor(window)
 window.mainloop()
