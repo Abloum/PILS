@@ -46,7 +46,7 @@ class Visualizer:
 
     def loop(self):
         """
-        Check s'il y a de nouvelle indication toutes les 100ms
+        Vérifie s'il y a de nouvelle indication toutes les 100ms
         """
         while not self.queue.empty():
             current = self.queue.get()
@@ -86,7 +86,7 @@ class Visualizer:
 
     def fcc(self, rgb):
         """
-        Change la couleur du trait tracer par la tortue.
+        Change la couleur du trait tracé par la tortue.
 
         :param rgb: couleur rgb
         :type rgb: str
@@ -96,13 +96,13 @@ class Visualizer:
 
     def erase(self, index):
         """
-        Efface le parcourt de la tortue.
+        Efface le parcours de la tortue.
         """
         self.list_actions.pop(int(index))
 
     def penup(self, any):
         """
-        Leve la tortue.
+        Lève la tortue.
         """
         self.turtle.penup()
 
@@ -122,13 +122,13 @@ class Visualizer:
 
     def restore(self, any):
         """
-        Restaure la tortue.
+        Remet le dessin à zéro.
         """
         self.turtle.reset()
 
     def clear(self, any):
         """
-        Nettoie le parcourt tortue.
+        Nettoie le parcours de la tortue.
         """
         self.turtle.clear()
 
