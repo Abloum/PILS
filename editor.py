@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter.filedialog import asksaveasfile
 from ivy.std_api import *
 from lxml import etree
 
@@ -62,6 +63,8 @@ NomFichier = Entry
 zoneSuppr = Frame()
 Suppr = Button
 Vide = Button
+
+saveIMG = Button
 
 leave = Button
 
@@ -175,9 +178,9 @@ class Editor:
                             fg=button_text_color,
                             command=self.vide)
 
-        self.leave = Button(window, text="Quitter", font=("Helvetica", 20), bg=button_color,
+        self.saveIMG = Button(window, text="Sauvegarder l'image", font=("Helvetica", 20), bg=button_color,
                             fg=button_text_color,
-                            command=self.the_end)
+                            command=self.save_img)
 
         zoneMode.pack(fill=X, padx=10, pady=(10,0))
         self.entry.pack(pady=(10, 5), padx=(90, 90), fill=X, side=TOP)
@@ -232,95 +235,147 @@ class Editor:
 
         self.Suppr.pack(ipadx=25, fill=X, side=LEFT)
         self.Vide.pack(ipadx=42, fill=X, side=LEFT)
-        self.leave.pack(fill=X, side=BOTTOM)
+
+        self.saveIMG.pack(fill=X, side=BOTTOM)
         IvyInit("Editor")
         IvyStart()
 
-    @staticmethod
-    def the_end():
-        window.destroy()
 
     def forward(self):
+        """
+        Envoi à la tortue l'ordre d'avancer de la valeur de l'entree principal de la fenetre
+        """
         if self.check_int(self.entry.get()):
             self.add_list("forward", self.entry.get())
 
     def back(self):
+        """
+        Envoi à la tortue l'ordre de reculer de la valeur de l'entree principal de la fenetre
+        """
         if self.check_int(self.entry.get()):
             self.add_list("back", self.entry.get())
 
     def left(self):
+        """
+        Envoi à la tortue l'ordre de tourner sur sa gauche de la valeur (en degré) de l'entree principal de la fenetre
+        """
         if self.check_int(self.entry.get()):
             self.add_list("left", self.entry.get())
 
     def right(self):
+        """
+        Envoi à la tortue l'ordre de tourner sur sa droite de la valeur (en degré) de l'entree principal de la fenetre
+        """
         if self.check_int(self.entry.get()):
             self.add_list("right", self.entry.get())
 
     def fpos(self):
+        """
+        Envoi à la tortue l'ordre de se deplacer vers la position x y (indiqué par les entry)
+        """
         if self.check_coordinates():
             self.add_list("fpos", "("+self.CoordX.get()+","+self.CoordY.get()+")")
 
     def fcap(self):
+        """
+        Envoi à la tortue l'ordre de se tourner jusqu'a atteindre l'angle indiqué par la valeure de l'entry principal
+        """
         if self.check_int(self.entry.get()):
             self.add_list("fcap", self.entry.get())
 
     def fcc(self):
+        """
+        Envoi à la tortue l'ordre de changer de couleur (selon les valeurs rgb des entry)
+        """
         if self.check_color():
             self.add_list("fcc", "("+self.colorR.get()+","+self.colorG.get()+","+self.colorB.get()+")")
 
     def penup(self):
+        """
+        Envoi à la tortue l'ordre de se lever
+        """
         self.add_list("penup", "0")
 
     def pendown(self):
+        """
+        Envoi à la tortue l'ordre de se poser
+        """
         self.add_list("pendown", "0")
 
     def RepTurnOn(self):
+        """
+        Active le mode repete (à partir d'un click sur ce bouton, les commandes entrés iront dans la liste qui sera répété)
+        """
         self.RepOff['state'] = NORMAL
         self.RepOn['state'] = DISABLED
 
     def RepTurnOff(self):
+        """
+        Désactive le mode repete (à partir d'un click sur ce bouton, les commandes entrés iront dans la liste de base)
+        """
         self.RepOn['state'] = NORMAL
         self.RepOff['state'] = DISABLED
 
     def autoOn(self):
+        """
+        Active le mode auto (la tortue bouge si une indication est donnée)
+        """
         self.autoOff['state'] = NORMAL
         self.autoOn['state'] = DISABLED
-        for i in range(self.start, len(self.liste_actions)):
-            move = (str(self.liste_actions[i])).split()
-            if move[0] == "clear" or move[0] == "restore" or move[0] == "origin" or move[0] == "pendown" or move[0] == "penup":
-                IvySendMsg("Draw:" + move[0] +" 0")
-            elif move[0] == "fpos":
-                IvySendMsg("Draw:fpos" + "(" + move[1] + "," + move[2])
-            elif move[0] == "fcc":
-                IvySendMsg("Draw:fcc" + "(" + move[1] + "," + move[2] + "," + move[3] + ")")
+        while(self.start < len(self.liste_actions)):
+            move = (str(self.liste_actions[self.start])).split()
+            if (move[0]=="repete"):
+                nb = int(move[1])
+                self.start+=1
+                listeTemp = []
+                while (move[0]!="fin"):
+                    listeTemp.append(str(self.liste_actions[self.start]))
+                    self.start+=1
+                    move = (str(self.liste_actions[self.start])).split()
+                self.lireRep(listeTemp, nb)
             else:
-                IvySendMsg("Draw:" + move[0] +" "+move[1])
+                IvySendMsg("Draw:" + move[0] + " " + move[1])
+            self.start+=1
 
     def autoOff(self):
+        """
+        Desactive le mode auto (la tortue ne bouge pas même si une indication est donnée)
+        """
         self.autoOn['state'] = NORMAL
         self.autoOff['state'] = DISABLED
         self.start = len(self.liste_actions)
 
     def origin(self):
+        """
+        Envoi à la tortue l'ordre de retourner au point d'origine
+        """
         self.add_list("origin", "0")
 
     def restore(self):
+        """
+        Envoi à la tortue l'ordre de restaurer la page
+        """
         self.add_list("restore", "0")
 
     def clear(self):
+        """
+        Envoi à la tortue l'ordre de nettoyer la page
+        """
         self.add_list("clear", "0")
 
     def save(self):
-        i=0
-        while(i < len(self.liste_actions)):
+        """
+        Sauvegarde en XML la liste des actions présentes dans l'historique des actions
+        """
+        if (len(self.NomFichier.get())>0):
+            self.var.set("")
+            i=0
             ch = "<?xml version='1.0' encoding='UTF-8'?>\n<liste_actions>\n"
-            for i in range(len(self.liste_actions)):
+            while(i < len(self.liste_actions)):
                 move = (str(self.liste_actions[i])).split()
                 if move[0] == "repete":
                     ch += "<repeter fois='"+move[1]+"'>\n"
-                    i+=1
                     while (move[0]!="fin"):
-                        print(move[0])
                         ch += self.xmlFileWrite(move)
                         i += 1
                         move = (str(self.liste_actions[i])).split()
@@ -336,6 +391,9 @@ class Editor:
             self.var.set("veuillez entrer un nom")
 
     def xmlFileWrite(self, move):
+        """
+        Passe des données de la liste (en anglais) au format imposé pour la sauvegarde en XML
+        """
         if move[0] == "clear":
             return "<nettoyer/>\n"
         elif move[0] == "restore":
@@ -354,35 +412,87 @@ class Editor:
             return "<gauche angle='" + move[1] + "'/>\n"
         elif move[0] == "right":
             return "<droite angle='" + move[1] + "'/>\n"
+        elif move[0] == "fcap":
+            return "<cap angle='" + move[1] + "'/>\n"
         elif move[0] == "fpos":
-            return "<position x='" + move[1] + "' y='" + move[2] + "' />\n"
+            moveTemp = eval(move[1])
+            return "<position x='" + str(moveTemp[0]) + "' y='" + str(moveTemp[1]) + "' />\n"
         elif move[0] == "fcc":
-            return "<crayon rouge='" + move[1] + "' vert='" + move[2] + "' bleu='" + move[3] + "'/>\n"
+            moveTemp = eval(move[1])
+            return "<crayon rouge='" + str(moveTemp[0]) + "' vert='" + str(moveTemp[1]) + "' bleu='" + str(moveTemp[2]) + "'/>\n"
         else :
             return ""
 
     def load(self):
+        """
+        Charge la liste des actions présentes dans le fichier xml recherché dans l'historique des actions
+        """
         if (len(self.NomFichier.get())>0):
+            self.autoOn['state'] = DISABLED
             tree = etree.parse("XML_Save/"+self.NomFichier.get()+".xml")
+            i = 1
             for move in tree.xpath("/liste_actions/*"):
-                print(str(move).split()[1])
-                # if str(move.get("move")) == "clear" or str(move.get("move")) == "restore" or str(move.get("move")) == "origin" or str(move.get("move")) == "pendown" or str(move.get("move")) == "penup":
-                #     self.add_list(str(move.get("move")), "0")
-                # elif move.get("move") == "fpos":
-                #     self.add_list("fpos", "(" + str(move.get("value1")) + "," + str(move.get("value2"))+")")
-                # elif move.get("move") == "fcc":
-                #     self.add_list("fcc", "(" + str(move.get("value1")) + "," + str(move.get("value2")) + "," + str(move.get("value3")) + ")")
-                # else:
-                #     self.add_list(str(move.get("move")), str(move.get("value")))
+                if str(move).split()[1] == "repeter" :
+                    self.liste_actions.append("repete "+move.get("fois"))
+                    self.liste.insert(END, ("repete",move.get("fois")))
+                    for moveRep in tree.xpath("/liste_actions/repeter[position()="+str(i)+"]/*"):
+                        self.FloadXML(moveRep)
+                    self.liste_actions.append("fin repete")
+                    self.liste.insert(END, ("fin repete"))
+                    i+=1
+                else :
+                    self.FloadXML(move)
+            self.autoOn()
         else :
             self.var.set("veuillez entrer un nom")
 
+    def FloadXML(self, move):
+        """
+        Passe du format imposé pour la sauvegarde en XML aux données de la liste (en anglais)
+        """
+        if str(move).split()[1] == "avancer":
+            self.add_list("forward", move.get("dist"))
+        elif str(move).split()[1] == "reculer":
+            self.add_list("back", move.get("dist"))
+        elif str(move).split()[1] == "droite":
+            self.add_list("right", move.get("angle"))
+        elif str(move).split()[1] == "gauche":
+            self.add_list("left", move.get("angle"))
+        elif str(move).split()[1] == "lever":
+            self.add_list("penup", "0")
+        elif str(move).split()[1] == "baisser":
+            self.add_list("pendown", "0")
+        elif str(move).split()[1] == "origine":
+            self.add_list("origin", "0")
+        elif str(move).split()[1] == "restaurer":
+            self.add_list("restore", "0")
+        elif str(move).split()[1] == "nettoyer":
+            self.add_list("clear", "0")
+        elif str(move).split()[1] == "crayon":
+            self.add_list("fcc", "(" + move.get("rouge") + "," + move.get("vert") + "," + move.get("bleu") + ")")
+        elif str(move).split()[1] == "cap":
+            self.add_list("fcap", move.get("angle"))
+        elif str(move).split()[1] == "position":
+            self.add_list("fpos", "(" + move.get("x") + "," + move.get("y") + ")")
+
     def check_mode_repete(self):
+        """
+        Vérifie si l'on est en mode repete
+
+        :rtype: Bool
+        """
         if (self.RepOff['state'] == NORMAL ) :
             return True
         return False
 
     def check_int(self, check):
+        """
+        Vérifie si l'entrée correspondante est bien un entier
+
+        :param check: entrée à vérifier
+        :type check: str
+        :rtype: Bool
+        """
         try:
             val = int(check)
             self.var.set("")
@@ -391,16 +501,12 @@ class Editor:
             self.var.set("veuillez entrer un entier")
             return False
 
-    def check_angle(self):
-        try:
-            val = float(self.entry.get())
-            self.var.set("")
-            return True
-        except:
-            self.var.set("veuillez entrer un angle")
-            return False
-
     def check_coordinates(self):
+        """
+        Vérifie les entrées correspondant aux coordonnées
+
+        :rtype: Bool
+        """
         try:
             int(self.CoordX.get())
             int(self.CoordY.get())
@@ -411,6 +517,11 @@ class Editor:
             return False
 
     def check_color(self):
+        """
+        Vérifie les entrées correspondant aux couleurs RGB
+
+        :rtype: Bool
+        """
         try:
             if (0 <= int(self.colorR.get()) <= 255 and
                 0 <= int(self.colorG.get()) <= 255 and
@@ -424,6 +535,9 @@ class Editor:
             return False
 
     def suppr_liste(self):
+        """
+        Supprime un élément (de la liste répété et de la liste principale) et redessine
+        """
         ListeP = (((str(self.liste.curselection())).replace("(", "")).replace(")", "")).split(",")
         ListeR = (((str(self.liste_repet.curselection())).replace("(", "")).replace(")", "")).split(",")
         for i in range(len(ListeP) - 1):
@@ -449,6 +563,9 @@ class Editor:
             self.redraw()
 
     def vide(self):
+        """
+        Vide la liste que l'on veut vider (en fonction de si le mode repete est activé)
+        """
         if self.check_mode_repete():
             while len(self.liste_actions_repet)>0:
                 self.liste_actions_repet.pop(0)
@@ -459,6 +576,9 @@ class Editor:
                 self.liste.delete(0)
 
     def add_list(self, move, size):
+        """
+        Ajoute les ordres qui seront envoyés à la tortue dans la liste correspondante et les envoies si nécéssaire
+        """
         if self.check_mode_repete():
             self.liste_actions_repet.append((move + " " + size))
             self.liste_repet.insert(END, (move, size))
@@ -469,6 +589,9 @@ class Editor:
                 IvySendMsg("Draw:" + move +" "+ size)
 
     def repet(self):
+        """
+        Ajoute à la liste principale la commande repete ainsi que ses éléments
+        """
         self.RepTurnOff()
         if self.check_int(self.NRep.get()):
             self.liste_actions.append("repete "+self.NRep.get())
@@ -480,15 +603,22 @@ class Editor:
                 self.liste.insert(END, str(self.liste_actions_repet[i]))
             self.liste_actions.append("fin repete")
             self.liste.insert(END, ("fin repete"))
-            self.lireRep(listeTemp, int(self.NRep.get()))
+            if (self.autoOn['state'] == DISABLED) :
+                self.lireRep(listeTemp, int(self.NRep.get()))
 
     def lireRep(self, liste, nb):
+        """
+        Lis une liste à répéter et envoi les commandes à la tortue
+        """
         for i in range(nb):
             for i in range(len(liste)):
                 move = (str(liste[i])).split()
                 IvySendMsg("Draw:" + move[0] + " " + move[1])
 
     def redraw(self):
+        """
+        Redessine entièrement le dessin (utilisé lors de la suppresion d'un élément de la liste principale)
+        """
         IvySendMsg("Draw:" + "restore" +" 0")
         i=0
         while(i < len(self.liste_actions)):
@@ -506,7 +636,14 @@ class Editor:
                 IvySendMsg("Draw:" + move[0] + " " + move[1])
             i+=1
 
-
+    def save_img(self):
+        """
+        Envoi une demande de sauvegarde d'image à la tortue
+        """
+        file_type = [("fichier PNG", "*.png"), ("fichier JPEG", "*.jpg")]
+        dialog = asksaveasfile(defaultextension=file_type, filetypes=file_type)
+        if dialog is not None:
+            IvySendMsg("Draw:" + "save_img " + dialog.name)
 
 Editor(window)
 window.mainloop()

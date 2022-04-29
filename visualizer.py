@@ -1,6 +1,7 @@
 import queue
 import turtle
 from tkinter import Tk, Canvas
+from PIL import Image
 
 from ivy.std_api import *
 
@@ -55,11 +56,14 @@ class Visualizer:
                 self.list_actions.append(tab)
 
         if not self.running:
-            # This is the brutal stop of the system. You may want to do
-            # some cleanup before actually shutting it down.
             import sys
             sys.exit(1)
         self.master.after(100, self.loop)
+
+    def save_img(self, filename):
+        self.canvas.postscript(file='tmp_img' + '.eps')
+        img = Image.open('tmp_img' + '.eps')
+        img.save(filename, 'png')
 
     def redraw(self, any):
         self.turtle.reset()
@@ -82,9 +86,19 @@ class Visualizer:
         self.turtle.pendown()
 
     def origin(self, any):
+        """
+        Déplace la tortue à l'origine (0;0) sans tracer de trait.
+
+        :param any: description du paramètre
+        :type any: str
+        :returns: Rien.
+        :rtype: None
+        """
         self.penup(any)
         self.turtle.goto(0, 0)
         self.pendown(any)
+
+    origin.__doc__ = "Déplace la tortue à l'origine (0;0) sans tracer de trait."
 
     def restore(self, any):
         self.turtle.reset()
