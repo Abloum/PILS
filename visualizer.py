@@ -96,7 +96,7 @@ class Visualizer:
         self.turtle.goto(eval(coordinates))
 
     def fcap(self, cap):
-        self.turtle.setheading(cap)
+        self.turtle.setheading(int(cap))
 
     def forward(self, amount):
         self.turtle.forward(int(amount))
