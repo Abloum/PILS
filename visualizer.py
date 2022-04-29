@@ -11,6 +11,9 @@ window = Tk()
 class Visualizer:
 
     def read_msg(self, *arg):
+        """
+        Lis le message recu
+        """
         print(str(arg[0]) + " a envoyé : " + arg[1])
         self.queue.put(arg[1])
 
@@ -43,7 +46,7 @@ class Visualizer:
 
     def loop(self):
         """
-        Check every 100 ms if there is something new in the queue.
+        Check s'il y a de nouvelle indication toutes les 100ms
         """
         while not self.queue.empty():
             current = self.queue.get()
@@ -61,11 +64,20 @@ class Visualizer:
         self.master.after(100, self.loop)
 
     def save_img(self, filename):
+        """
+        Tourne la tortue sur sa gauche.
+
+        :param filename: nom du fichier
+        :type filename: str
+        """
         self.canvas.postscript(file='tmp_img' + '.eps')
         img = Image.open('tmp_img' + '.eps')
         img.save(filename, 'png')
 
     def redraw(self, any):
+        """
+        Redessine selon la liste active
+        """
         self.turtle.reset()
         tmp = self.list_actions
         self.list_actions = []
@@ -73,55 +85,105 @@ class Visualizer:
             self.queue.put(str(tmp[i][0]) + " " + str(tmp[i][1]))
 
     def fcc(self, rgb):
+        """
+        Change la couleur du trait tracer par la tortue.
+
+        :param rgb: couleur rgb
+        :type rgb: str
+        """
         print(eval(rgb))
         self.turtle.pencolor(eval(rgb))
 
     def erase(self, index):
+        """
+        Efface le parcourt de la tortue.
+        """
         self.list_actions.pop(int(index))
 
     def penup(self, any):
+        """
+        Leve la tortue.
+        """
         self.turtle.penup()
 
     def pendown(self, any):
+        """
+        Pose la tortue
+        """
         self.turtle.pendown()
 
     def origin(self, any):
         """
         Déplace la tortue à l'origine (0;0) sans tracer de trait.
-
-        :param any: description du paramètre
-        :type any: str
-        :returns: Rien.
-        :rtype: None
         """
         self.penup(any)
         self.turtle.goto(0, 0)
         self.pendown(any)
 
-    origin.__doc__ = "Déplace la tortue à l'origine (0;0) sans tracer de trait."
-
     def restore(self, any):
+        """
+        Restaure la tortue.
+        """
         self.turtle.reset()
 
     def clear(self, any):
+        """
+        Nettoie le parcourt tortue.
+        """
         self.turtle.clear()
 
     def fpos(self, coordinates):
+        """
+        Deplace la tortue aux coordonnées indiqué.
+
+        :param coord: couple de coordonné
+        :type coord: str
+        """
         self.turtle.goto(eval(coordinates))
 
     def fcap(self, cap):
+        """
+        Tourne la tortue à l'angle indiqué (selon cercle trigonometrique).
+
+        :param cap: angle
+        :type cap: str
+        """
         self.turtle.setheading(int(cap))
 
     def forward(self, amount):
+        """
+        Avance la tortue.
+
+        :param amount: distance de deplacement
+        :type amount: str
+        """
         self.turtle.forward(int(amount))
 
     def back(self, amount):
+        """
+        Recule la tortue.
+
+        :param amount: distance de deplacement
+        :type amount: str
+        """
         self.turtle.back(int(amount))
 
     def left(self, amount):
+        """
+        Tourne la tortue sur sa gauche.
+
+        :param amount: angle de rotation
+        :type amount: str
+        """
         self.turtle.left(int(amount))
 
     def right(self, amount):
+        """
+        Tourne la tortue sur sa droite.
+
+        :param amount: angle de rotation
+        :type amount: str
+        """
         self.turtle.right(int(amount))
 
     def end_application(self):
